@@ -233,31 +233,37 @@ export async function getBubblemapScreenshot(
     headless: true,
   });
 
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
 
     // Set viewport to a reasonable size
     await page.setViewport({ width: 1200, height: 800 });
 
     // Navigate to the Bubblemaps page for the token
+    console.log(
+      `Navigating to ${BUBBLEMAPS_FRONTEND_URL}/${chain}/token/${contractAddress}`
+    );
     await page.goto(
-      `${BUBBLEMAPS_FRONTEND_URL}/token/${chain}/${contractAddress}`,
+      `${BUBBLEMAPS_FRONTEND_URL}/${chain}/token/${contractAddress}`,
       {
         waitUntil: "networkidle2",
-        timeout: 60000,
+        timeout: 90000,
       }
     );
 
     // Wait for the visualization to load
+    console.log("Waiting for visualization to load");
     await page.waitForSelector(
       ".bubblemap-container, .distribution-visualization",
-      { timeout: 30000 }
+      { timeout: 90000 }
     );
 
     // Give it a little more time to fully render
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Take a screenshot of the visualization
+    console.log("Taking screenshot");
     const element = await page.$(
       ".bubblemap-container, .distribution-visualization"
     );
@@ -268,7 +274,12 @@ export async function getBubblemapScreenshot(
     const screenshot = await element.screenshot({ type: "png" });
 
     return screenshot as Buffer;
+  } catch (error: any) {
+    console.error("Error in getBubblemapScreenshot:", error);
+    throw new Error(`Failed to generate screenshot: ${error.message}`);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }
