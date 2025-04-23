@@ -230,6 +230,7 @@ export async function getBubblemapScreenshot(
 ): Promise<Buffer> {
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    ignoreDefaultArgs: ["--enable-automation"],
     headless: true,
   });
 
@@ -237,8 +238,11 @@ export async function getBubblemapScreenshot(
   try {
     page = await browser.newPage();
 
-    // Set viewport to a reasonable size
-    await page.setViewport({ width: 1200, height: 800 });
+    // Disable JavaScript
+    await page.setJavaScriptEnabled(false);
+
+    // Set viewport to a smaller size
+    await page.setViewport({ width: 600, height: 400 });
 
     // Navigate to the Bubblemaps page for the token
     console.log(
@@ -254,24 +258,19 @@ export async function getBubblemapScreenshot(
 
     // Wait for the visualization to load
     console.log("Waiting for visualization to load");
-    await page.waitForSelector(
-      ".bubblemap-container, .distribution-visualization",
-      { timeout: 90000 }
-    );
 
-    // Give it a little more time to fully render
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    // Take a screenshot of the visualization
-    console.log("Taking screenshot");
-    const element = await page.$(
-      ".bubblemap-container, .distribution-visualization"
-    );
-    if (!element) {
-      throw new Error("Could not find visualization element on the page");
+    // Check if the page content is empty
+    const pageContent = await page.content();
+    if (!pageContent.trim()) {
+      throw new Error("Page content is empty");
     }
 
-    const screenshot = await element.screenshot({ type: "png" });
+    // Wait for 30 seconds
+    await new Promise((resolve) => setTimeout(resolve, 30000));
+
+    // Take a screenshot of the entire page
+    console.log("Taking screenshot of the entire page");
+    const screenshot = await page.screenshot({ fullPage: true, type: "png" });
 
     return screenshot as Buffer;
   } catch (error: any) {
