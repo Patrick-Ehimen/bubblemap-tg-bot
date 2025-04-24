@@ -1,3 +1,16 @@
+/**
+ * The `createBot` function sets up a Telegram bot that allows users to input a contract address,
+ * select a blockchain, and receive detailed information and visualization using Bubblemaps service.
+ * @param {string} token - The `token` parameter in the `createBot` function is the token required to
+ * authenticate and connect to the Telegram Bot API. This token is provided by the BotFather when you
+ * create a new bot on Telegram. It acts as a unique identifier for your bot and is necessary for
+ * establishing a connection and
+ * @returns The `createBot` function is returning an instance of the Telegraf bot that has been
+ * configured with various commands and actions to handle user interactions related to fetching and
+ * displaying bubblemap data for a given token contract address on different blockchain networks. The
+ * function sets up commands for starting the bot, providing help instructions, handling text input
+ * from users, and processing user selections for different blockchain networks. The bot instance is
+ */
 import { Telegraf, Markup } from "telegraf";
 import { isContractAddressValid } from "../utils/validators";
 import { formatTokenData } from "../utils/formatters";
@@ -89,7 +102,7 @@ export function createBot(token: string) {
     const { contractAddress } = userSessions.get(userId)!;
 
     try {
-      await ctx.editMessageText("Processing your request...");
+      await ctx.editMessageText("Processing your request...please wait");
 
       const tokenData = await getBubblemapData(contractAddress, chainMatch);
       const screenshotBuffer = await getBubblemapScreenshot(
@@ -103,7 +116,10 @@ export function createBot(token: string) {
         {
           caption: `Bubblemap for ${
             tokenData.name
-          } on ${chainMatch.toUpperCase()}`,
+          } on ${chainMatch.toUpperCase()} network\n\n[View on Bubblemaps](https://app.bubblemaps.io/${chainMatch}/token/${
+            tokenData.contractAddress
+          })`,
+          parse_mode: "Markdown",
         }
       );
 
