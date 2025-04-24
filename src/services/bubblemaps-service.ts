@@ -1,6 +1,7 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
 import { TokenData, DecentralizationData, MapData } from "../types";
+const fs = require("fs");
 
 export type ChainType =
   | "eth"
@@ -228,57 +229,31 @@ export async function getBubblemapScreenshot(
   contractAddress: string,
   chain: ChainType
 ): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    ignoreDefaultArgs: ["--enable-automation"],
-    headless: true,
-  });
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
 
-  let page;
   try {
-    page = await browser.newPage();
-
-    // Disable JavaScript
-    await page.setJavaScriptEnabled(false);
-
-    // Set viewport to a smaller size
-    await page.setViewport({ width: 600, height: 400 });
-
-    // Navigate to the Bubblemaps page for the token
     console.log(
       `Navigating to ${BUBBLEMAPS_FRONTEND_URL}/${chain}/token/${contractAddress}`
     );
     await page.goto(
-      `${BUBBLEMAPS_FRONTEND_URL}/${chain}/token/${contractAddress}`,
-      {
-        waitUntil: "networkidle2",
-        timeout: 90000,
-      }
+      `${BUBBLEMAPS_FRONTEND_URL}/${chain}/token/${contractAddress}`
     );
 
-    // Wait for the visualization to load
-    console.log("Waiting for visualization to load");
+    await page.setViewport({ width: 1280, height: 720 });
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    // Check if the page content is empty
-    const pageContent = await page.content();
-    if (!pageContent.trim()) {
-      throw new Error("Page content is empty");
-    }
-
-    // Wait for 30 seconds
-    await new Promise((resolve) => setTimeout(resolve, 30000));
-
-    // Take a screenshot of the entire page
     console.log("Taking screenshot of the entire page");
-    const screenshot = await page.screenshot({ fullPage: true, type: "png" });
-
+    const screenshot = await page.screenshot({
+      path: "bubblemap.png",
+      fullPage: true,
+      type: "png",
+    });
     return screenshot as Buffer;
   } catch (error: any) {
-    console.error("Error in getBubblemapScreenshot:", error);
+    console.error("Error in getMapp:", error);
     throw new Error(`Failed to generate screenshot: ${error.message}`);
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    await browser.close();
   }
 }
