@@ -17,7 +17,7 @@ export function formatTokenData(data: TokenData, chain: ChainType): string {
   const chainEmoji = getChainEmoji(chain);
 
   return `
-  *${data.name} (${data.symbol}) Analysis* ${chainEmoji}
+  *${data.name} (${data.symbol}) Token Info* ${chainEmoji}
   
   *Decentralization Score:* ${data.decentralizationScore.toFixed(1)}/100
   ${getDecentralizationComment(data.decentralizationScore)}
@@ -51,14 +51,16 @@ export function formatTokenData(data: TokenData, chain: ChainType): string {
       const amountInfo = holder.amount
         ? ` (${formatNumber(holder.amount)})`
         : "";
-      return `${i + 1}. ${truncateAddress(
+      const indexStr = String(i + 1).padStart(2, " ");
+      const percentageStr = holder.percentage.toFixed(2).padStart(5, " ");
+      return `${indexStr}. ${truncateAddress(
         holder.address
-      )}${nameInfo}: ${holder.percentage.toFixed(2)}%${amountInfo}${
+      )}${nameInfo}: ${percentageStr}%${amountInfo}${
         holder.isContract ? " 📄" : ""
       }`;
     })
     .join("\n")}
-  
+
   ${getChainExplorer(chain, data.contractAddress)}
   `;
 }
