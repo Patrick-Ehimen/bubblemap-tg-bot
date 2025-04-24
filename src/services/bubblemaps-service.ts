@@ -1,7 +1,6 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
 import { TokenData, DecentralizationData, MapData } from "../types";
-const fs = require("fs");
 
 export type ChainType =
   | "eth"
