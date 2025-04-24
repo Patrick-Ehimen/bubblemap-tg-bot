@@ -12,6 +12,9 @@
  * from users, and processing user selections for different blockchain networks. The bot instance is
  */
 import { Telegraf, Markup } from "telegraf";
+import { Message } from "telegraf/typings/core/types/typegram";
+
+type TextMessage = Message & { text: string };
 import { isContractAddressValid } from "../utils/validators";
 import { formatTokenData } from "../utils/formatters";
 import {
@@ -39,22 +42,113 @@ export function createBot(token: string) {
 
   bot.start((ctx) => {
     ctx.reply(
-      "Welcome to the Bubblemaps Bot! Send me a contract address to get detailed information and visualization across multiple chains."
+      "👋 Welcome to the Bubblemaps Bot!\n\n" +
+        "Send me a contract address to get detailed information and visualization across multiple chains.☘️\n\n" +
+        "In groups, tag me with the contract address.",
+      Markup.inlineKeyboard([
+        Markup.button.url(
+          "Add to Group",
+          `https://t.me/${ctx.botInfo.username}?startgroup=true`
+        ),
+      ])
     );
   });
+
+  function isTextMessage(message: Message): message is TextMessage {
+    return "text" in message;
+  }
 
   // help command
   bot.help((ctx) => {
     // Respond to the help command with instructions on how to use the bot
     ctx.reply(
-      "How to use this bot:\n\n" +
+      "How to use this bot 🤖:\n\n" +
         "1. Send a valid token contract address\n" +
         "2. Select the chain the token is on\n" +
         "3. Wait a moment while I fetch the data\n" +
         "4. I'll send you a bubblemap screenshot and token analysis\n\n" +
-        "Supported chains: ETH, BSC, FTM, AVAX, CRO, ARBI, POLY, BASE, SOL, SONIC\n\n" +
+        "Supported chains ⛓️: ETH, BSC, FTM, AVAX, CRO, ARBI, POLY, BASE, SOL, SONIC\n\n" +
         "Example: 0x603c7f932ed1fc6575303d8fb018fdcbb0f39a95 (BSC)"
     );
+  });
+
+  bot.on("text", async (ctx) => {
+    if (
+      ctx.message &&
+      isTextMessage(ctx.message) &&
+      !ctx.message.text.startsWith("/")
+    ) {
+      if (ctx.chat.type === "group" || ctx.chat.type === "supergroup") {
+        if (ctx.message.text.includes(`@${ctx.botInfo.username}`)) {
+          const text = ctx.message.text
+            .replace(`@${ctx.botInfo.username}`, "")
+            .trim();
+          if (isContractAddressValid(text)) {
+            const address = text;
+            const userId = ctx.from?.id;
+
+            if (!userId) {
+              return ctx.reply("Error: Could not identify user.");
+            }
+
+            userSessions.set(userId, { contractAddress: address });
+
+            const chainButtons = Object.keys(SUPPORTED_CHAINS).map(
+              (chainName) =>
+                Markup.button.callback(
+                  chainName,
+                  `chain_${SUPPORTED_CHAINS[chainName]}`
+                )
+            );
+
+            const keyboard = Markup.inlineKeyboard(
+              chainButtons.reduce<any[][]>((rows, button, index) => {
+                // Group buttons in pairs: push a new row if index is even, otherwise add to the last row
+                if (index % 2 === 0) rows.push([button]);
+                else rows[rows.length - 1].push(button);
+                return rows;
+              }, [])
+            );
+
+            ctx.reply("Please select the chain for this token:", keyboard);
+          } else {
+            return;
+          }
+        } else {
+          return;
+        }
+      } else {
+        const text = ctx.message.text.trim();
+        if (isContractAddressValid(text)) {
+          const address = text;
+          const userId = ctx.from?.id;
+
+          if (!userId) {
+            return ctx.reply("Error: Could not identify user.");
+          }
+
+          userSessions.set(userId, { contractAddress: address });
+
+          const chainButtons = Object.keys(SUPPORTED_CHAINS).map((chainName) =>
+            Markup.button.callback(
+              chainName,
+              `chain_${SUPPORTED_CHAINS[chainName]}`
+            )
+          );
+
+          const keyboard = Markup.inlineKeyboard(
+            chainButtons.reduce<any[][]>((rows, button, index) => {
+              // Group buttons in pairs: push a new row if index is even, otherwise add to the last row
+              if (index % 2 === 0) rows.push([button]);
+              else rows[rows.length - 1].push(button);
+              return rows;
+            }, [])
+          );
+
+          ctx.reply("Please select the chain for this token:", keyboard);
+        }
+      }
+    }
   });
 
   bot.on("text", async (ctx) => {
@@ -102,7 +196,7 @@ export function createBot(token: string) {
     const { contractAddress } = userSessions.get(userId)!;
 
     try {
-      await ctx.editMessageText("Processing your request...please wait");
+      await ctx.editMessageText("Processing your request...please wait⌛️");
 
       const tokenData = await getBubblemapData(contractAddress, chainMatch);
       const screenshotBuffer = await getBubblemapScreenshot(
