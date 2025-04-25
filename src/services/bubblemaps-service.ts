@@ -1,20 +1,13 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
 import { TokenData, DecentralizationData, MapData } from "../types";
+import { calculateTotalSupply } from "../utils/total-supply";
+import { processTopHolders } from "../utils/top-holder";
+import { calculateDecentralizationScore } from "../utils/decentralization-score";
+import { ChainType, BUBBLEMAPS_FRONTEND_URL } from "../../constants";
+import dotenv from "dotenv";
 
-export type ChainType =
-  | "eth"
-  | "bsc"
-  | "ftm"
-  | "avax"
-  | "cro"
-  | "arbi"
-  | "poly"
-  | "base"
-  | "sol"
-  | "sonic";
-
-const BUBBLEMAPS_FRONTEND_URL = "https://app.bubblemaps.io";
+dotenv.config();
 
 /**
  * Fetches token data from Bubblemaps API
@@ -88,137 +81,6 @@ export async function getBubblemapData(
     console.error("Error fetching Bubblemaps data:", error);
     throw new Error("Failed to fetch token data from Bubblemaps");
   }
-}
-
-/**
- * Calculate total supply based on node amounts
- */
-function calculateTotalSupply(mapData: any): number | null {
-  if (!mapData || !mapData.nodes || !Array.isArray(mapData.nodes)) {
-    return null;
-  }
-
-  return mapData.nodes.reduce((total: number, node: any) => {
-    return total + (node.amount || 0);
-  }, 0);
-}
-
-/**
- * Processes map data to extract top holders
- */
-function processTopHolders(mapData: any): Array<{
-  address: string;
-  percentage: number;
-  isContract: boolean;
-  name?: string;
-  amount?: number;
-}> {
-  const holders: Array<{
-    address: string;
-    percentage: number;
-    isContract: boolean;
-    name?: string;
-    amount?: number;
-  }> = [];
-
-  // Extract nodes from map data
-  if (mapData && mapData.nodes && Array.isArray(mapData.nodes)) {
-    // Sort nodes by percentage (representing holdings) in descending order
-    const sortedNodes = [...mapData.nodes]
-      .filter((node) => node.address)
-      .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))
-      .slice(0, 10); // Get top 10 holders
-
-    sortedNodes.forEach((node) => {
-      holders.push({
-        address: node.address,
-        percentage: node.percentage || 0,
-        isContract: node.is_contract || false,
-        name: node.name,
-        amount: node.amount,
-      });
-    });
-  }
-
-  return holders;
-}
-
-/**
- * Calculates a decentralization score based on token distribution
- * Used as a fallback if the API doesn't provide a score
- */
-function calculateDecentralizationScore(mapData: any): number {
-  // Start with base score
-  let score = 100;
-
-  if (!mapData || !mapData.nodes || !Array.isArray(mapData.nodes)) {
-    return 50; // Default score when data is insufficient
-  }
-
-  // Analyze concentration of tokens
-  const sortedNodes = [...mapData.nodes]
-    .filter((node) => node.percentage)
-    .sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
-
-  // Calculate Gini coefficient (measure of inequality)
-  const percentages = sortedNodes.map((node) => node.percentage || 0);
-  const giniCoefficient = calculateGiniCoefficient(percentages);
-
-  // Penalize based on Gini coefficient (higher inequality = lower score)
-  score -= giniCoefficient * 50;
-
-  // Check top holder concentration
-  if (sortedNodes.length > 0) {
-    // Top holder percentage
-    const topHolderPercentage = sortedNodes[0].percentage || 0;
-
-    // Penalize for high concentration in top holder
-    if (topHolderPercentage > 10) {
-      score -= (topHolderPercentage - 10) * 1.5;
-    }
-
-    // Check top 5 holders concentration
-    const top5Percentage = sortedNodes
-      .slice(0, 5)
-      .reduce((sum, node) => sum + (node.percentage || 0), 0);
-
-    // Penalize for high concentration in top 5 holders
-    if (top5Percentage > 50) {
-      score -= (top5Percentage - 50) * 0.8;
-    }
-  }
-
-  // Penalize if there are very few holders
-  if (sortedNodes.length < 100) {
-    score -= (100 - sortedNodes.length) / 2;
-  }
-
-  // Ensure score is within bounds
-  return Math.max(1, Math.min(99, score));
-}
-
-/**
- * Calculate Gini coefficient for distribution analysis
- */
-function calculateGiniCoefficient(values: number[]): number {
-  if (values.length <= 1) return 0;
-
-  // Sort values in ascending order
-  const sortedValues = [...values].sort((a, b) => a - b);
-
-  const n = sortedValues.length;
-  let numerator = 0;
-
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      numerator += Math.abs(sortedValues[i] - sortedValues[j]);
-    }
-  }
-
-  const meanValue = sortedValues.reduce((sum, value) => sum + value, 0) / n;
-  if (meanValue === 0) return 0;
-
-  return numerator / (2 * n * n * meanValue);
 }
 
 /**
