@@ -1,5 +1,5 @@
 import { TokenData } from "../types";
-import { ChainType } from "../services/bubblemaps-service";
+import { ChainType } from "../../constants";
 
 /**
  * Formats token data into a readable message
@@ -44,22 +44,14 @@ export function formatTokenData(data: TokenData, chain: ChainType): string {
   }
   
   *Top Holders:*
-  ${data.largestHolders
-    .slice(0, 5)
-    .map((holder, i) => {
-      const nameInfo = holder.name ? ` - ${holder.name}` : "";
-      const amountInfo = holder.amount
-        ? ` (${formatNumber(holder.amount)})`
-        : "";
-      const indexStr = String(i + 1).padStart(2, " ");
-      const percentageStr = holder.percentage.toFixed(2).padStart(5, " ");
-      return `${indexStr}. ${truncateAddress(
-        holder.address
-      )}${nameInfo}: ${percentageStr}%${amountInfo}${
-        holder.isContract ? " 📄" : ""
-      }`;
-    })
-    .join("\n")}
+  ${data.largestHolders.slice(0, 5).map((holder, i) => {
+    const nameInfo = holder.name ? ` - ${holder.name}` : "";
+    const indexStr = String(i + 1).padStart(2, " ");
+    const percentageStr = holder.percentage.toFixed(2).padStart(5, " ");
+    return `${indexStr}. ${truncateAddress(
+      holder.address
+    )}${nameInfo}: ${percentageStr}%${holder.isContract ? " 📄" : ""}\n`;
+  })}
 
   ${getChainExplorer(chain, data.contractAddress)}
   `;
@@ -92,7 +84,7 @@ function getChainExplorer(chain: ChainType, address: string): string {
     poly: `[View on Polygonscan](https://polygonscan.com/token/${address})`,
     base: `[View on Basescan](https://basescan.org/token/${address})`,
     sol: `[View on Solscan](https://solscan.io/token/${address})`,
-    sonic: `[View on Sonic Explorer](https://explorer.sonic.ooo/token/${address})`,
+    sonic: `[View on Sonic Explorer](https://sonicscan.org/token/${address})`,
   };
 
   return explorers[chain];
