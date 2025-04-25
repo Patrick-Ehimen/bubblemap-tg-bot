@@ -13,15 +13,17 @@
  */
 import { Telegraf, Markup } from "telegraf";
 import { Message } from "telegraf/typings/core/types/typegram";
+import numeral from "numeral";
 
 type TextMessage = Message & { text: string };
 import { isContractAddressValid } from "../utils/validators";
 import { formatTokenData } from "../utils/formatters";
 import {
-  ChainType,
   getBubblemapData,
   getBubblemapScreenshot,
 } from "../services/bubblemaps-service";
+import { getCoinGeckoData } from "../services/coingecko-service";
+import { CHAIN_TO_COIN_ID, ChainType } from "../../constants";
 
 export function createBot(token: string) {
   const bot = new Telegraf(token);
@@ -205,14 +207,41 @@ export function createBot(token: string) {
       );
       const formattedData = formatTokenData(tokenData, chainMatch);
 
+      const coinId = CHAIN_TO_COIN_ID[chainMatch] || "";
+      let coingeckoData = null;
+
+      if (coinId) {
+        coingeckoData = await getCoinGeckoData(coinId, contractAddress);
+      }
+
+      let caption = `*Bubblemap for ${
+        tokenData.name
+      } on ${chainMatch.toUpperCase()} network.*`;
+
+      if (coingeckoData) {
+        caption += `\n\n*Description:* ${
+          coingeckoData.description.en
+        }\n\n*Market Cap (USD):* $${numeral(
+          coingeckoData.market_data.market_cap.usd
+        ).format("0,0.00")}\n*Price (USD):* $${numeral(
+          coingeckoData.market_data.current_price.usd
+        ).format("0,0.000")}\n*24h Volume (USD):* $${numeral(
+          coingeckoData.market_data.total_volume.usd
+        ).format("0,0.00")}\n*24h Price Change (%):* ${numeral(
+          coingeckoData.market_data.price_change_percentage_24h
+        ).format("0.00")}%\n*All Time High (USD)* $${numeral(
+          coingeckoData.market_data.ath.usd
+        ).format("0,0.0000")}\n*All Time Low (USD)* $${numeral(
+          coingeckoData.market_data.atl.usd
+        ).format("0,0.0000")}`;
+      }
+
+      caption += `\n\n[View on Bubblemaps](https://app.bubblemaps.io/${chainMatch}/token/${tokenData.contractAddress})`;
+      
       await ctx.replyWithPhoto(
         { source: screenshotBuffer },
         {
-          caption: `Bubblemap for ${
-            tokenData.name
-          } on ${chainMatch.toUpperCase()} network\n\n[View on Bubblemaps](https://app.bubblemaps.io/${chainMatch}/token/${
-            tokenData.contractAddress
-          })`,
+          caption: caption,
           parse_mode: "Markdown",
         }
       );
