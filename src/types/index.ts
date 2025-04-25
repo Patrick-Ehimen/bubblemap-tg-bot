@@ -41,3 +41,27 @@ export interface MapData {
   }>;
   dt_update?: string;
 }
+
+export interface CoinGeckoData {
+  description: {
+    en: string;
+  };
+  market_data: {
+    market_cap: {
+      usd: number;
+    };
+    current_price: {
+      usd: number;
+    };
+    total_volume: {
+      usd: number;
+    };
+    price_change_percentage_24h: number;
+    ath: {
+      usd: number;
+    };
+    atl: {
+      usd: number;
+    };
+  };
+}
