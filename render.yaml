@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bubblemap-tg-bot
+    env: node
+    buildCommand: |
+      apt-get update -y && \
+      apt-get install -y chromium chromium-sandbox && \
+      which chromium && \
+      npm install && \
+      npm run build
+    startCommand: npm start
+    envVars:
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "true"
