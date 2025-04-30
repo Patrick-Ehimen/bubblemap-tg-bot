@@ -23,7 +23,7 @@ import {
   getBubblemapScreenshot,
 } from "../services/bubblemaps-service";
 import { getCoinGeckoData } from "../services/coingecko-service";
-import { CHAIN_TO_COIN_ID, ChainType } from "../../constants";
+import { CHAIN_TO_COIN_ID, ChainType } from "../constants";
 
 export function createBot(token: string) {
   const bot = new Telegraf(token);

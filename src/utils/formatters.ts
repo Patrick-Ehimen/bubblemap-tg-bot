@@ -1,5 +1,5 @@
 import { TokenData } from "../types";
-import { ChainType } from "../../constants";
+import { ChainType } from "../constants";
 
 /**
  * Formats token data into a readable message

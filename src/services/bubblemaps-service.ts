@@ -4,7 +4,7 @@ import { TokenData, DecentralizationData, MapData } from "../types";
 import { calculateTotalSupply } from "../utils/total-supply";
 import { processTopHolders } from "../utils/top-holder";
 import { calculateDecentralizationScore } from "../utils/decentralization-score";
-import { ChainType, BUBBLEMAPS_FRONTEND_URL } from "../../constants";
+import { ChainType, BUBBLEMAPS_FRONTEND_URL } from "../constants";
 import dotenv from "dotenv";
 
 dotenv.config();
