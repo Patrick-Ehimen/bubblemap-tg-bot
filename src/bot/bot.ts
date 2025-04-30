@@ -219,9 +219,8 @@ export function createBot(token: string) {
       } on ${chainMatch.toUpperCase()} network.*`;
 
       if (coingeckoData) {
-        caption += `\n\n*Description:* ${
-          coingeckoData.description.en
-        }\n\n*Market Cap (USD):* $${numeral(
+        const firstSentence = coingeckoData.description.en.split(". ")[0] + ".";
+        caption += `\n\n*Description:* ${firstSentence}\n\n*Market Cap (USD):* $${numeral(
           coingeckoData.market_data.market_cap.usd
         ).format("0,0.00")}\n*Price (USD):* $${numeral(
           coingeckoData.market_data.current_price.usd
@@ -229,15 +228,11 @@ export function createBot(token: string) {
           coingeckoData.market_data.total_volume.usd
         ).format("0,0.00")}\n*24h Price Change (%):* ${numeral(
           coingeckoData.market_data.price_change_percentage_24h
-        ).format("0.00")}%\n*All Time High (USD)* $${numeral(
-          coingeckoData.market_data.ath.usd
-        ).format("0,0.0000")}\n*All Time Low (USD)* $${numeral(
-          coingeckoData.market_data.atl.usd
-        ).format("0,0.0000")}`;
+        ).format("0.00")}%`;
       }
 
-      caption += `\n\n[View on Bubblemaps](https://app.bubblemaps.io/${chainMatch}/token/${tokenData.contractAddress})`;
-      
+      caption += `\n${formattedData}`;
+
       await ctx.replyWithPhoto(
         { source: screenshotBuffer },
         {
@@ -246,7 +241,6 @@ export function createBot(token: string) {
         }
       );
 
-      await ctx.reply(formattedData, { parse_mode: "Markdown" });
       userSessions.delete(userId);
       await ctx.deleteMessage();
     } catch (error) {

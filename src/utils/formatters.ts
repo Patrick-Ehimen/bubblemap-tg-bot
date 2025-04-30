@@ -17,12 +17,11 @@ export function formatTokenData(data: TokenData, chain: ChainType): string {
   const chainEmoji = getChainEmoji(chain);
 
   return `
-  *${data.name} (${data.symbol}) Token Info* ${chainEmoji}
-  
   *Decentralization Score:* ${data.decentralizationScore.toFixed(1)}/100
   ${getDecentralizationComment(data.decentralizationScore)}
   
   *Supply Distribution:*
+  *Total Supply:* ${data.totalSupply ? formatNumber(data.totalSupply) : "N/A"}
   ${
     (data.cexPercentage ?? 0) > 0
       ? `• ${(data.cexPercentage ?? 0).toFixed(2)}% in Centralized Exchanges`
@@ -33,26 +32,9 @@ export function formatTokenData(data: TokenData, chain: ChainType): string {
       ? `• ${(data.contractPercentage ?? 0).toFixed(2)}% in Smart Contracts`
       : ""
   }
-  
-  *Total Supply:* ${data.totalSupply ? formatNumber(data.totalSupply) : "N/A"}
-  *Holder Count:* ${data.holderCount ? formatNumber(data.holderCount) : "N/A"}
-  *Network:* ${chain.toUpperCase()}
-  *Created/Updated:* ${
-    data.creationDate
-      ? new Date(data.creationDate).toLocaleDateString()
-      : "Unknown"
-  }
-  
-  *Top Holders:*
-  ${data.largestHolders.slice(0, 5).map((holder, i) => {
-    const nameInfo = holder.name ? ` - ${holder.name}` : "";
-    const indexStr = String(i + 1).padStart(2, " ");
-    const percentageStr = holder.percentage.toFixed(2).padStart(5, " ");
-    return `${indexStr}. ${truncateAddress(
-      holder.address
-    )}${nameInfo}: ${percentageStr}%${holder.isContract ? " 📄" : ""}\n`;
-  })}
-
+  [View on Bubblemaps](https://app.bubblemaps.io/${chain}/token/${
+    data.contractAddress
+  })
   ${getChainExplorer(chain, data.contractAddress)}
   `;
 }

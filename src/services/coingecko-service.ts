@@ -20,6 +20,7 @@ export async function getCoinGeckoData(
         },
       }
     );
+    // console.log("CoinGecko response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching CoinGecko data:", error);
