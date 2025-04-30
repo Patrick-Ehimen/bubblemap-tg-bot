@@ -1,4 +1,5 @@
 # Bubblemaps Telegram Bot 🤖
+TG: @Bubblemaps_Telegram_Bot
 
 A Telegram bot that provides detailed token analytics, decentralization scores, and interactive Bubblemaps visualizations across multiple blockchains.
 
